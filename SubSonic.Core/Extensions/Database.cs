@@ -375,15 +375,32 @@ namespace SubSonic.Extensions
                 }
             }
 
-            //add the PK constraint
-            Constraint c = new Constraint(ConstraintType.Where, tbl.PrimaryKey.Name)
+            //add the PK constraints
+            bool singleConstraint = true;
+            foreach(IColumn column in tbl.PrimaryKey)
             {
-                ParameterValue = settings[tbl.PrimaryKey.Name],
-                ParameterName = tbl.PrimaryKey.Name,
-                ConstructionFragment = tbl.PrimaryKey.Name
-            };
-            query.Constraints.Add(c);
-
+                Constraint c = null;
+                if (singleConstraint)
+                {
+                    c = new Constraint(ConstraintType.Where, column.Name)
+                    {
+                        ParameterValue = settings[column.Name],
+                        ParameterName = column.Name,
+                        ConstructionFragment = column.Name
+                    };
+                }
+                else
+                {
+                    c = new Constraint(ConstraintType.And, column.Name)
+                    {
+                        ParameterValue = settings[column.Name],
+                        ParameterName = column.Name,
+                        ConstructionFragment = column.Name
+                    };
+                }
+                query.Constraints.Add(c);
+                singleConstraint = false;
+            }
             return query;
         }
 
@@ -424,17 +441,20 @@ namespace SubSonic.Extensions
             var query = new Delete<T>(tbl, provider);
             if (tbl != null)
             {
-                IColumn pk = tbl.PrimaryKey;
+                List<IColumn> pks = tbl.PrimaryKey;
                 var settings = item.ToDictionary();
-                if (pk != null)
+                if (pks.Count > 0)
                 {
-                    var c = new Constraint(ConstraintType.Where, pk.Name)
+                    foreach (IColumn column in pks)
                     {
-                        ParameterValue = settings[pk.Name],
-                        ParameterName = pk.Name,
-                        ConstructionFragment = pk.Name
-                    };
-                    query.Constraints.Add(c);
+                        var c = new Constraint(ConstraintType.Where, column.Name)
+                        {
+                            ParameterValue = settings[column.Name],
+                            ParameterName = column.Name,
+                            ConstructionFragment = column.Name
+                        };
+                        query.Constraints.Add(c);
+                    }
                 }
                 else
                     query.Constraints = item.ToConstraintList();

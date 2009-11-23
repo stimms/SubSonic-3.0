@@ -69,8 +69,11 @@ namespace SubSonic.SqlGeneration.Schema
             var result = base.BuildCreateTableStatement(table);
 
             //add a named PK constraint so we can drop it later
-            result += "ALTER TABLE " + table.QualifiedName + "\r\n";
-            result += string.Format("ADD CONSTRAINT PK_{0}_{1} PRIMARY KEY([{1}])", table.Name, table.PrimaryKey.Name);
+            foreach (IColumn keyColumn in table.PrimaryKey)
+            {
+                result += "ALTER TABLE " + table.QualifiedName + "\r\n";
+                result += string.Format("ADD CONSTRAINT PK_{0}_{1} PRIMARY KEY([{1}])", table.Name, keyColumn.Name);
+            }
 
             return result;
         }

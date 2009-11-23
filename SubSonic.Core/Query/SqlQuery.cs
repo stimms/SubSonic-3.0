@@ -630,7 +630,7 @@ namespace SubSonic.Query
             ITable fromTable = Joins.Count > 0 ? Joins[Joins.Count - 1].FromColumn.Table : FromTables[0];
 
             //first effort, match the name of the fromTable PK to the toTable
-            var fromColumn = fromTable.PrimaryKey;
+            var fromColumn = fromTable.PrimaryKey[0];
 
             //find the From table's PK in the other table
             var toColumn = toTable.GetColumn(fromColumn.Name);
@@ -638,7 +638,7 @@ namespace SubSonic.Query
             if(toColumn == null)
             {
                 //second effort - reverse the lookup and match the PK of the toTable to the fromTable
-                toColumn = toTable.PrimaryKey;
+                toColumn = toTable.PrimaryKey[0];
                 fromColumn = fromTable.GetColumn(toColumn.Name);
             }
 

@@ -104,9 +104,22 @@ namespace SubSonic.Repository
                 Migrate<T>();
             var tbl = _provider.FindOrCreateTable<T>();
 
-            var result = new Select(_provider).From(tbl).Where(tbl.PrimaryKey).IsEqualTo(key).ExecuteSingle<T>();
-
-            return result;
+            if (key.GetType() == typeof(List<object>))
+            {
+                var query = new Select(_provider).From(tbl);
+                int i = 0;
+                foreach(object obj in key as List<object>)
+                {
+                    query = query.Where(tbl.PrimaryKey[i++]).IsEqualTo(obj);
+                }
+                var result = query.ExecuteSingle<T>();
+                return result;
+            }
+            else
+            {
+                var result = new Select(_provider).From(tbl).Where(tbl.PrimaryKey.First()).IsEqualTo(key).ExecuteSingle<T>();
+                return result;
+            }
         }
 
         /// <summary>
@@ -136,9 +149,9 @@ namespace SubSonic.Repository
             if (_options.Contains(SimpleRepositoryOptions.RunMigrations))
                 Migrate<T>();
             var tbl = _provider.FindOrCreateTable<T>();
-            var qry = new Select(_provider).From(tbl).Paged(pageIndex + 1, pageSize).OrderAsc(tbl.PrimaryKey.Name);
+            var qry = new Select(_provider).From(tbl).Paged(pageIndex + 1, pageSize).OrderAsc(tbl.PrimaryKey.First().Name);
             var total =
-                new Select(_provider, new Aggregate(tbl.PrimaryKey, AggregateFunction.Count)).From<T>().ExecuteScalar();
+                new Select(_provider, new Aggregate(tbl.PrimaryKey.First(), AggregateFunction.Count)).From<T>().ExecuteScalar();
             int totalRecords = 0;
             int.TryParse(total.ToString(), out totalRecords);
             return new PagedList<T>(qry.ToList<T>(), totalRecords, pageIndex, pageSize);
@@ -159,7 +172,7 @@ namespace SubSonic.Repository
             var tbl = _provider.FindOrCreateTable<T>();
             var qry = new Select(_provider).From(tbl).Paged(pageIndex + 1, pageSize).OrderAsc(sortBy);
             var total =
-                new Select(_provider, new Aggregate(tbl.PrimaryKey, AggregateFunction.Count)).From<T>().ExecuteScalar();
+                new Select(_provider, new Aggregate(tbl.PrimaryKey[0], AggregateFunction.Count)).From<T>().ExecuteScalar();
 
             return new PagedList<T>(qry.ToList<T>(), (int)total, pageIndex, pageSize);
         }
@@ -186,7 +199,7 @@ namespace SubSonic.Repository
             if (result != null && result != DBNull.Value) {
                 try {
                     var tbl =  _provider.FindOrCreateTable(typeof(T));
-                    var prop = item.GetType().GetProperty(tbl.PrimaryKey.Name);
+                    var prop = item.GetType().GetProperty(tbl.PrimaryKey[0].Name);
                     var settable = result.ChangeTypeTo(prop.PropertyType);
                     prop.SetValue(item, settable, null);
 
@@ -258,7 +271,24 @@ namespace SubSonic.Repository
         public int Delete<T>(object key) where T : class, new()
         {
             var tbl = _provider.FindOrCreateTable<T>();
-            return new Delete<T>(_provider).From<T>().Where(tbl.PrimaryKey).IsEqualTo(key).Execute();
+
+
+            SqlQuery query = new Delete<T>(_provider);
+            if (key.GetType() == typeof(List<object>))
+            {
+                int i = 0;
+                List<object> keys = key as List<object>;
+                foreach (IColumn column in tbl.PrimaryKey)
+                {
+                    query = query.Where(column.Name).IsEqualTo(keys[i++]);
+                }
+            }
+            else
+            {
+                query = query.Where(tbl.PrimaryKey[0].Name).IsEqualTo(key);
+            }
+            return query.Execute();
+
         }
 
         /// <summary>

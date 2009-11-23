@@ -20,7 +20,7 @@ namespace SubSonic.Schema
         IList<IColumn> Columns { get; set; }
         string ClassName { get; set; }
         bool HasPrimaryKey { get; }
-        IColumn PrimaryKey { get; }
+        List<IColumn> PrimaryKey { get; }
         IColumn Descriptor { get; }
 
         string CreateSql { get; }

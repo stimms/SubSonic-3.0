@@ -12,6 +12,7 @@
 //   rights and limitations under the License.
 // 
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Text;
 using SubSonic.Extensions;
@@ -106,11 +107,23 @@ namespace SubSonic.SqlGeneration
             foreach(IColumn col in table.Columns)
                 columnsSql.AppendFormat("\r\n  `{0}`{1},", col.Name, GenerateColumnAttributes(col));
 
-            if(table.HasPrimaryKey)
-                columnsSql.AppendFormat("\r\n  PRIMARY KEY (`{0}`),", table.PrimaryKey.Name);
+            if (table.HasPrimaryKey)
+            {
+                columnsSql.AppendFormat("\r\n  PRIMARY KEY (`{0}`),", CompilePrimaryKey(table.PrimaryKey));
+            }
 
             string sql = columnsSql.ToString();
             return sql.Chop(",");
+        }
+
+        private string CompilePrimaryKey(List<IColumn> keyColumns)
+        {
+            StringBuilder compiledKeys = new StringBuilder();
+            foreach(IColumn col in keyColumns)
+            {
+                compiledKeys.AppendFormat("{0}, ", col.Name);
+            }
+            return compiledKeys.ToString().Substring(0, compiledKeys.ToString().Length - 2);
         }
 
         /// <summary>

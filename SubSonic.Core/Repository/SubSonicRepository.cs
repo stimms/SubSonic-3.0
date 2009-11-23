@@ -105,7 +105,7 @@ namespace SubSonic.Repository
         {
             ITable tbl = GetTable();
             return _db.Select.From(tbl)
-                .Where(tbl.PrimaryKey.Name).IsEqualTo(key)
+                .Where(tbl.PrimaryKey.First().Name).IsEqualTo(key)
                 .ExecuteSingle<T>();
         }
 
@@ -123,7 +123,7 @@ namespace SubSonic.Repository
         public PagedList<T> GetPaged(int pageIndex, int pageSize)
         {
             ITable tbl = GetTable();
-            string orderBy = tbl.PrimaryKey != null ? tbl.PrimaryKey.Name : tbl.Columns[0].Name;
+            string orderBy = tbl.PrimaryKey.Count != 0 ? tbl.PrimaryKey.First().Name : tbl.Columns[0].Name;
             return GetPaged(orderBy, pageIndex, pageSize);
         }
 
@@ -205,7 +205,7 @@ namespace SubSonic.Repository
                         try
                         {
                             var tbl = provider.FindOrCreateTable(typeof(T));
-                            var prop = item.GetType().GetProperty(tbl.PrimaryKey.Name);
+                            var prop = item.GetType().GetProperty(tbl.PrimaryKey[0].Name);
                             var settable = result.ChangeTypeTo(prop.PropertyType);
                             prop.SetValue(item, settable, null);
 
@@ -352,8 +352,25 @@ namespace SubSonic.Repository
         {
             ITable tbl = _db.FindTable(typeof(T).Name);
             int result = 0;
-            if(tbl != null)
-                result = new Delete<T>(provider).Where(tbl.PrimaryKey.Name).IsEqualTo(key).Execute();
+            if (tbl != null)
+            {
+
+                SqlQuery query = new Delete<T>(provider);
+                if (key.GetType() == typeof(List<object>))
+                {
+                    int i = 0;
+                    List<object> keys = key as List<object>;
+                    foreach (IColumn column in tbl.PrimaryKey)
+                    {
+                        query = query.Where(column.Name).IsEqualTo(keys[i++]);
+                    }
+                }
+                else
+                {
+                    query = query.Where(tbl.PrimaryKey[0].Name).IsEqualTo(key);
+                }
+                result = query.Execute();
+            }
             return result;
         }
 

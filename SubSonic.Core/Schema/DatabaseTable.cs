@@ -64,9 +64,9 @@ namespace SubSonic.Schema
             get { return PrimaryKey != null; }
         }
 
-        public IColumn PrimaryKey
+        public List<IColumn> PrimaryKey
         {
-            get { return Columns.Where(c => c.IsPrimaryKey).FirstOrDefault(); }
+            get { return Columns.Where(c => c.IsPrimaryKey).ToList(); }
         }
 
         public IColumn Descriptor
@@ -83,7 +83,7 @@ namespace SubSonic.Schema
                     }
                 }
                 if(result == null)
-                    result = PrimaryKey;
+                    result = PrimaryKey.First();
 
                 return result;
             }
