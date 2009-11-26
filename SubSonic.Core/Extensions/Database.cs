@@ -179,7 +179,7 @@ namespace SubSonic.Extensions
                     //MAbraham1, 2009/11/18:  if property type is integer, why convert to decimal (valueType)?
                     else if (currentProp.PropertyType != valueType)
                     {
-                        rdr.GetValue(i).ChangeTypeTo(currentProp.PropertyType);
+                        currentProp.SetValue(item, rdr.GetValue(i).ChangeTypeTo(currentProp.PropertyType), null);
                     }
                     else
                         currentProp.SetValue(item, rdr.GetValue(i).ChangeTypeTo(valueType), null);
