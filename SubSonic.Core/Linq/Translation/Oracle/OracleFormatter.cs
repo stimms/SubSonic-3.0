@@ -456,15 +456,9 @@ namespace SubSonic.Linq.Translation.Oracle
             if (take > 0)
             {
                 AppendNewLine(Indentation.Same);
-                if (select.Where != null)
-                {
-                    sb.Append(" AND ");
-                }
-                else
-                {
-                    sb.Append(" WHERE ");
-                }
-                sb.AppendFormat(" rownum >= {0} AND rownum <= {1}", skip, take+skip);
+                sb.Insert(0, "select * from  ( select t1.*, ROWNUM rn from (");
+                sb.Append(") t1 ) where" );
+                sb.AppendFormat(" rn >= {0} AND rn <= {1}", skip, take+skip);
             }
             return select;
         }

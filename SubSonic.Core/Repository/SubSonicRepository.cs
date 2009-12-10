@@ -192,6 +192,10 @@ namespace SubSonic.Repository
                     //add in SCOPE_INDENTITY so we can pull back the ID
                     query.CommandSql += "; SELECT SCOPE_IDENTITY() as new_id";
                 }
+                else if (provider.Client == DataClient.OracleClient || provider.Client == DataClient.OracleDataAccessClient)
+                {//oracle hates ;
+                    query.CommandSql = query.CommandSql.Replace(';', ' ');
+                }
 
                 /** add "using" keywords to dispose IDataReader rdr object after its get out of the scope **/
                 using (var rdr = provider.ExecuteReader(query))
